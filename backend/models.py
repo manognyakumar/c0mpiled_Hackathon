@@ -1,8 +1,8 @@
 """
-SQLAlchemy ORM models for the database
+SQLAlchemy ORM models - Visitor Management System
 """
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -12,14 +12,15 @@ class Resident(Base):
     __tablename__ = "residents"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    email = Column(String, unique=True, index=True)
-    phone = Column(String)
-    unit_number = Column(String, index=True)
-    password_hash = Column(String)
+    apt_number = Column(String(20), unique=True, index=True, nullable=False)
+    name = Column(String(100), nullable=False)
+    phone = Column(String(20), nullable=False)
+    preferred_language = Column(String(10), default="en")  # 'en' or 'ar'
+    password_hash = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    visitor_approvals = relationship("VisitorApproval", back_populates="resident")
+    approvals = relationship("Approval", back_populates="resident")
+    recurring_visitors = relationship("RecurringVisitor", back_populates="resident")
 
 
 class Visitor(Base):
@@ -27,62 +28,33 @@ class Visitor(Base):
     __tablename__ = "visitors"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    email = Column(String, index=True)
-    phone = Column(String)
-    photo_url = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    name = Column(String(100), nullable=False, index=True)
+    purpose = Column(String(255), nullable=True)
+    photo_url = Column(String(500), nullable=True)
+    phone = Column(String(20), nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
 
-    approvals = relationship("VisitorApproval", back_populates="visitor")
+    approvals = relationship("Approval", back_populates="visitor")
 
 
-class VisitorApproval(Base):
-    """Visitor approval request model"""
-    __tablename__ = "visitor_approvals"
+class Approval(Base):
+    """Visitor approval model"""
+    __tablename__ = "approvals"
 
     id = Column(Integer, primary_key=True, index=True)
-    visitor_id = Column(Integer, ForeignKey("visitors.id"))
-    resident_id = Column(Integer, ForeignKey("residents.id"))
-    status = Column(String, default="pending", index=True)  # pending, approved, rejected, expired
-    visit_date = Column(DateTime, index=True)
-    visit_start_time = Column(String)
-    visit_end_time = Column(String)
-    qr_code = Column(String, nullable=True)
-    purpose = Column(String)
+    resident_id = Column(Integer, ForeignKey("residents.id"), nullable=False)
+    visitor_id = Column(Integer, ForeignKey("visitors.id"), nullable=False)
+    status = Column(String(20), default="pending", index=True)  # pending, approved, denied, expired
+    valid_from = Column(DateTime, nullable=True)
+    valid_until = Column(DateTime, nullable=True)
+    approval_method = Column(String(20), default="manual")  # manual, voice, calendar, recurring
     created_at = Column(DateTime, default=datetime.utcnow)
     approved_at = Column(DateTime, nullable=True)
-    expires_at = Column(DateTime, nullable=True)
+    denied_at = Column(DateTime, nullable=True)
+    deny_reason = Column(String(255), nullable=True)
 
+    resident = relationship("Resident", back_populates="approvals")
     visitor = relationship("Visitor", back_populates="approvals")
-    resident = relationship("Resident", back_populates="visitor_approvals")
-
-
-class Guard(Base):
-    """Guard model"""
-    __tablename__ = "guards"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    email = Column(String, unique=True, index=True)
-    phone = Column(String)
-    password_hash = Column(String)
-    shift_start = Column(String)
-    shift_end = Column(String)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-
-class CheckIn(Base):
-    """Visitor check-in record"""
-    __tablename__ = "check_ins"
-
-    id = Column(Integer, primary_key=True, index=True)
-    approval_id = Column(Integer, ForeignKey("visitor_approvals.id"))
-    guard_id = Column(Integer, ForeignKey("guards.id"))
-    check_in_time = Column(DateTime, default=datetime.utcnow, index=True)
-    check_out_time = Column(DateTime, nullable=True)
-    entry_point = Column(String)
-    temperature = Column(Float, nullable=True)
 
 
 class RecurringVisitor(Base):
@@ -90,11 +62,37 @@ class RecurringVisitor(Base):
     __tablename__ = "recurring_visitors"
 
     id = Column(Integer, primary_key=True, index=True)
-    resident_id = Column(Integer, ForeignKey("residents.id"))
-    visitor_id = Column(Integer, ForeignKey("visitors.id"))
-    frequency = Column(String)  # daily, weekly, monthly
-    day_of_week = Column(String, nullable=True)
-    visit_time = Column(String)
-    duration_minutes = Column(Integer)
+    resident_id = Column(Integer, ForeignKey("residents.id"), nullable=False)
+    name = Column(String(100), nullable=False)
+    schedule = Column(String(100), nullable=False)  # e.g., "every_tuesday_thursday"
+    time_window = Column(String(50), nullable=False)  # e.g., "09:00-12:00"
+    photo_url = Column(String(500), nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    resident = relationship("Resident", back_populates="recurring_visitors")
+
+
+class Guard(Base):
+    """Guard model"""
+    __tablename__ = "guards"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False)
+    phone = Column(String(20), nullable=True)
+    password_hash = Column(String(255), nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class AuditLog(Base):
+    """Audit trail for all actions"""
+    __tablename__ = "audit_log"
+
+    id = Column(Integer, primary_key=True, index=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    resident_id = Column(Integer, ForeignKey("residents.id"), nullable=True)
+    visitor_id = Column(Integer, ForeignKey("visitors.id"), nullable=True)
+    guard_id = Column(Integer, ForeignKey("guards.id"), nullable=True)
+    action = Column(String(50), nullable=False)  # approval_requested, approved, denied, checked_in, etc.
+    details = Column(Text, nullable=True)  # JSON string for extra info

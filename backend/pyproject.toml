@@ -1,0 +1,92 @@
+# ==========================
+# Project Metadata
+# ==========================
+[project]
+name = "visitor-management-system"
+version = "1.0.0"
+description = "AI-powered Visitor Management System with Voice Processing"
+readme = "README.md"
+requires-python = ">=3.10"
+
+# ==========================
+# Core Runtime Dependencies
+# ==========================
+dependencies = [
+    # --- Web framework & server ---
+    "fastapi>=0.109.0",        # High-performance async web framework
+    "uvicorn>=0.27.0",         # ASGI server used to run FastAPI
+    
+    # --- Database & ORM ---
+    "sqlalchemy>=2.0.25",      # SQL toolkit and ORM
+    "aiosqlite>=0.19.0",       # Async SQLite driver
+    
+    # --- Authentication & security ---
+    "python-jose[cryptography]>=3.3.0",  # JWT handling
+    "passlib[bcrypt]>=1.7.4",  # Password hashing utilities
+    "bcrypt>=4.1.2",           # Low-level bcrypt hashing
+    
+    # --- Configuration & environment ---
+    "pydantic>=2.5.3",         # Data validation
+    "pydantic-settings>=2.1.0", # Settings management via environment variables
+    "python-dotenv>=1.0.0",    # Load environment variables from .env files
+    
+    # --- API utilities ---
+    "python-multipart>=0.0.6", # Multipart/form-data support (file uploads)
+    "slowapi>=0.1.9",          # Rate limiting for FastAPI
+    "aiofiles>=23.2.1",        # Async file handling
+    
+    # --- Audio/Voice processing ---
+    "openai-whisper>=20231117", # Whisper for voice transcription (optional)
+    
+    # --- Date/time utilities ---
+    "python-dateutil>=2.8.2",  # Date parsing utilities
+    
+    # --- Background tasks ---
+    "apscheduler>=3.10.4",     # Advanced scheduler for cron jobs
+    
+    # --- Logging & Observability ---
+    "structlog>=24.1.0",       # Structured logging
+]
+
+# ==========================
+# Optional Dependencies
+# ==========================
+[project.optional-dependencies]
+dev = [
+    "black",                   # Code formatter
+    "isort",                   # Import sorter
+    "ruff",                    # Fast Python linter
+    "mypy",                    # Type checker
+]
+test = [
+    "pytest>=8.0.0",           # Testing framework
+    "pytest-asyncio>=0.23.0",  # Async test support
+    "httpx>=0.26.0",           # Async HTTP client for testing
+]
+
+# ==========================
+# Build System
+# ==========================
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# ==========================
+# Tool Configurations
+# ==========================
+[tool.black]
+line-length = 100
+exclude = "venv|__pycache__"
+
+[tool.isort]
+profile = "black"
+line_length = 100
+skip = ["venv", "__pycache__"]
+
+[tool.ruff]
+line-length = 100
+exclude = ["venv", "__pycache__"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+python_files = ["test_*.py", "*_test.py"]

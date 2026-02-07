@@ -3,46 +3,44 @@ Pydantic models for request/response validation
 """
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
+
+# ============== Visitor Schemas ==============
 
 class VisitorBase(BaseModel):
-    """Base visitor schema"""
     name: str
-    email: EmailStr
-    phone: str
+    purpose: Optional[str] = None
+    phone: Optional[str] = None
 
 
 class VisitorCreate(VisitorBase):
-    """Create visitor schema"""
     pass
 
 
 class VisitorResponse(VisitorBase):
-    """Visitor response schema"""
     id: int
     photo_url: Optional[str] = None
-    created_at: datetime
+    timestamp: datetime
 
     class Config:
         from_attributes = True
 
 
+# ============== Resident Schemas ==============
+
 class ResidentBase(BaseModel):
-    """Base resident schema"""
+    apt_number: str
     name: str
-    email: EmailStr
     phone: str
-    unit_number: str
+    preferred_language: str = "en"
 
 
 class ResidentCreate(ResidentBase):
-    """Create resident schema"""
-    password: str
+    password: Optional[str] = None
 
 
 class ResidentResponse(ResidentBase):
-    """Resident response schema"""
     id: int
     created_at: datetime
 
@@ -50,53 +48,102 @@ class ResidentResponse(ResidentBase):
         from_attributes = True
 
 
-class VisitorApprovalBase(BaseModel):
-    """Base visitor approval schema"""
-    visitor_id: int
-    resident_id: int
-    visit_date: datetime
-    visit_start_time: str
-    visit_end_time: str
+# ============== Approval Schemas ==============
+
+class ApprovalRequestCreate(BaseModel):
+    """Guard creates approval request for a visitor"""
+    visitor_name: str
+    visitor_phone: Optional[str] = None
     purpose: str
+    apt_number: str  # Guard enters apartment number
+    photo_url: Optional[str] = None
 
 
-class VisitorApprovalCreate(VisitorApprovalBase):
-    """Create visitor approval schema"""
-    pass
+class ApprovalAction(BaseModel):
+    """Resident approves a visitor"""
+    approval_id: int
+    valid_until: Optional[datetime] = None
 
 
-class VisitorApprovalResponse(VisitorApprovalBase):
-    """Visitor approval response schema"""
+class ApprovalDeny(BaseModel):
+    """Resident denies a visitor"""
+    approval_id: int
+    reason: Optional[str] = None
+
+
+class ApprovalResponse(BaseModel):
     id: int
+    resident_id: int
+    visitor_id: int
     status: str
-    qr_code: Optional[str] = None
+    valid_from: Optional[datetime] = None
+    valid_until: Optional[datetime] = None
+    approval_method: str
     created_at: datetime
     approved_at: Optional[datetime] = None
-    expires_at: Optional[datetime] = None
-    visitor: VisitorResponse
-    resident: ResidentResponse
+    visitor: Optional[VisitorResponse] = None
+    resident: Optional[ResidentResponse] = None
 
     class Config:
         from_attributes = True
 
 
-class GuardBase(BaseModel):
-    """Base guard schema"""
+class ApprovalStatusResponse(BaseModel):
+    """Response for guard checking visitor status"""
+    approval_id: int
+    status: str
+    visitor_name: str
+    purpose: Optional[str] = None
+    photo_url: Optional[str] = None
+    valid_from: Optional[datetime] = None
+    valid_until: Optional[datetime] = None
+    is_valid_now: bool
+    apt_number: str
+    resident_name: str
+
+
+# ============== Schedule Schemas ==============
+
+class ScheduleVisitor(BaseModel):
+    approval_id: int
+    visitor_id: int
+    visitor_name: str
+    purpose: Optional[str] = None
+    photo_url: Optional[str] = None
+    status: str
+    valid_from: Optional[datetime] = None
+    valid_until: Optional[datetime] = None
+    approval_method: str
+
+
+class TodayScheduleResponse(BaseModel):
+    resident_id: int
+    resident_name: str
+    apt_number: str
+    date: str
+    visitors: List[ScheduleVisitor]
+    total_count: int
+    pending_count: int
+    approved_count: int
+
+
+# ============== Recurring Visitor Schemas ==============
+
+class RecurringVisitorCreate(BaseModel):
+    resident_id: int
     name: str
-    email: EmailStr
-    phone: str
-    shift_start: str
-    shift_end: str
+    schedule: str
+    time_window: str
+    photo_url: Optional[str] = None
 
 
-class GuardCreate(GuardBase):
-    """Create guard schema"""
-    password: str
-
-
-class GuardResponse(GuardBase):
-    """Guard response schema"""
+class RecurringVisitorResponse(BaseModel):
     id: int
+    resident_id: int
+    name: str
+    schedule: str
+    time_window: str
+    photo_url: Optional[str] = None
     is_active: bool
     created_at: datetime
 
@@ -104,20 +151,46 @@ class GuardResponse(GuardBase):
         from_attributes = True
 
 
-class CheckInRequest(BaseModel):
-    """Check-in request schema"""
-    approval_id: int
-    entry_point: str
-    temperature: Optional[float] = None
+# ============== Voice Processing Schemas ==============
+
+class VoiceProcessResponse(BaseModel):
+    success: bool
+    transcript: str
+    language: str
+    extracted: dict
+    approval_id: Optional[int] = None
+    message: str
 
 
-class CheckInResponse(BaseModel):
-    """Check-in response schema"""
-    id: int
-    approval_id: int
-    check_in_time: datetime
-    entry_point: str
-    temperature: Optional[float] = None
+# ============== Calendar Schemas ==============
 
-    class Config:
-        from_attributes = True
+class CalendarEvent(BaseModel):
+    title: str
+    time: str
+    date: Optional[str] = None
+
+
+class CalendarSyncRequest(BaseModel):
+    resident_id: int
+    events: List[CalendarEvent]
+
+
+class CalendarSyncResponse(BaseModel):
+    success: bool
+    events_processed: int
+    approvals_created: int
+
+
+# ============== Auth Schemas ==============
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user_type: str
+    user_id: int
+
+
+class LoginRequest(BaseModel):
+    phone: str
+    password: Optional[str] = None
+    user_type: str = "resident"
