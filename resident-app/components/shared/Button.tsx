@@ -1,8 +1,6 @@
 /**
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * Button — Obsidian Neon
- * whileTap scale:0.96, whileHover y:-2, spring transitions.
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * Button — Light trust-driven design.
+ * Gentle hover elevation, no harsh glows.
  */
 'use client';
 
@@ -28,11 +26,11 @@ interface ButtonProps {
 }
 
 const variantStyles: Record<Variant, string> = {
-  primary:   'bg-neon-cyan text-obsidian hover:shadow-glow-cyan font-semibold',
-  secondary: 'bg-neon-violet text-white hover:shadow-glow-violet font-semibold',
-  success:   'bg-neon-green text-obsidian hover:shadow-glow-green font-semibold',
-  danger:    'bg-status-denied text-white hover:shadow-glow-red font-semibold',
-  ghost:     'bg-transparent text-white/70 hover:text-white hover:bg-white/5 border border-glass-border',
+  primary:   'bg-brand text-white hover:bg-brand-dark shadow-sm font-medium',
+  secondary: 'bg-base-muted text-ink-secondary hover:bg-base-hover border border-base-border font-medium',
+  success:   'bg-status-success text-white hover:bg-green-700 shadow-sm font-medium',
+  danger:    'bg-status-error text-white hover:bg-red-700 shadow-sm font-medium',
+  ghost:     'bg-transparent text-ink-muted hover:text-ink hover:bg-base-muted font-medium',
 };
 
 const sizeStyles: Record<Size, string> = {
@@ -58,12 +56,12 @@ export default function Button({
       type={type}
       disabled={disabled || loading}
       onClick={onClick}
-      whileTap={{ scale: 0.96 }}
-      whileHover={{ y: -2 }}
+      whileTap={{ scale: 0.97 }}
+      whileHover={{ y: -1 }}
       transition={SPRING}
       className={`
         inline-flex items-center justify-center gap-2
-        transition-shadow
+        transition-colors duration-200
         disabled:opacity-40 disabled:pointer-events-none
         ${variantStyles[variant]}
         ${sizeStyles[size]}

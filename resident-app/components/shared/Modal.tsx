@@ -1,8 +1,5 @@
 /**
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * Modal — Glass overlay, spring entrance.
- * Uses stiffness:100 damping:15 for large entrance.
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * Modal — Light overlay, gentle spring entrance.
  */
 'use client';
 
@@ -12,13 +9,8 @@ import { createPortal } from 'react-dom';
 
 const SPRING_MODAL = { type: 'spring' as const, stiffness: 100, damping: 15 };
 
-/* ── Sub-components ──────────────────────────────── */
 function ModalHeader({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return (
-    <div className={`pb-4 border-b border-glass-border ${className}`}>
-      {children}
-    </div>
-  );
+  return <div className={`pb-4 border-b border-base-border ${className}`}>{children}</div>;
 }
 
 function ModalBody({ children, className = '' }: { children: ReactNode; className?: string }) {
@@ -27,13 +19,12 @@ function ModalBody({ children, className = '' }: { children: ReactNode; classNam
 
 function ModalFooter({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`pt-4 border-t border-glass-border flex items-center justify-end gap-3 ${className}`}>
+    <div className={`pt-4 border-t border-base-border flex items-center justify-end gap-3 ${className}`}>
       {children}
     </div>
   );
 }
 
-/* ── Main Modal ──────────────────────────────────── */
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -67,26 +58,24 @@ function ModalRoot({ isOpen, onClose, children, size = 'md' }: ModalProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          {/* Backdrop */}
           <motion.div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            className="absolute inset-0 bg-ink/20 backdrop-blur-sm"
             onClick={onClose}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           />
 
-          {/* Panel */}
           <motion.div
             className={`
               relative w-full ${maxW}
-              bg-obsidian-surface/95 backdrop-blur-glass
-              border border-glass-border rounded-modal
-              p-6 shadow-glass-lg
+              bg-base-surface
+              border border-base-border rounded-modal
+              p-6 shadow-elevated
             `}
-            initial={{ scale: 0.9, opacity: 0, y: 30 }}
+            initial={{ scale: 0.95, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+            exit={{ scale: 0.97, opacity: 0, y: 12 }}
             transition={SPRING_MODAL}
             onClick={(e) => e.stopPropagation()}
           >
@@ -99,7 +88,6 @@ function ModalRoot({ isOpen, onClose, children, size = 'md' }: ModalProps) {
   );
 }
 
-/* ── Compose & Export ────────────────────────────── */
 const Modal = Object.assign(ModalRoot, {
   Header: ModalHeader,
   Body: ModalBody,

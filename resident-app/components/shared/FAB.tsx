@@ -1,15 +1,12 @@
 /**
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * FAB — Floating Action Button, spring entrance.
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * FAB — Floating Action Button with brand blue.
  */
 'use client';
 
 import { ReactNode } from 'react';
 import { motion } from 'framer-motion';
 
-const SPRING_ENTRANCE = { type: 'spring' as const, stiffness: 260, damping: 20, delay: 0.3 };
-const SPRING_UI = { type: 'spring' as const, stiffness: 300, damping: 30 };
+const SPRING = { type: 'spring' as const, stiffness: 260, damping: 20, delay: 0.3 };
 
 interface FABProps {
   icon: ReactNode;
@@ -24,16 +21,16 @@ export default function FAB({ icon, onClick, ariaLabel = 'Action' }: FABProps) {
       aria-label={ariaLabel}
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      whileHover={{ scale: 1.08, y: -2 }}
-      whileTap={{ scale: 0.96 }}
-      transition={SPRING_ENTRANCE}
+      whileHover={{ scale: 1.06, y: -2 }}
+      whileTap={{ scale: 0.95 }}
+      transition={SPRING}
       className="
         fixed bottom-24 z-40
         w-14 h-14 rounded-full
-        bg-neon-cyan text-obsidian
+        bg-brand text-white
         flex items-center justify-center
         text-2xl font-bold
-        shadow-glow-cyan
+        shadow-elevated
       "
       style={{ insetInlineEnd: '1.5rem' }}
     >

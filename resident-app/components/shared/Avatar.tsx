@@ -1,7 +1,5 @@
 /**
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * Avatar — Glass surface, neon ring for active state.
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * Avatar — Clean rounded image with optional brand ring.
  */
 'use client';
 
@@ -30,7 +28,7 @@ export default function Avatar({
   fallback,
 }: AvatarProps) {
   const ringClass = ring
-    ? 'ring-2 ring-neon-cyan ring-offset-2 ring-offset-obsidian'
+    ? 'ring-2 ring-brand ring-offset-2 ring-offset-base'
     : '';
 
   return (
@@ -43,7 +41,7 @@ export default function Avatar({
       {src ? (
         <img src={src} alt={alt} className="w-full h-full object-cover" />
       ) : (
-        <div className="w-full h-full flex items-center justify-center bg-neon-violet/20 text-neon-violet font-bold">
+        <div className="w-full h-full flex items-center justify-center bg-brand-light text-brand font-semibold">
           {fallback ?? alt.charAt(0).toUpperCase()}
         </div>
       )}

@@ -1,30 +1,21 @@
 /**
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * Card — Composition Pattern (Card.Header, Card.Body, Card.Footer)
- * Glass surface with 1px white/10 border. Spring animations.
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * Clean white surface with subtle border and shadow.
  */
 'use client';
 
 import { ReactNode } from 'react';
 import { motion, type Variants } from 'framer-motion';
 
-/* ── Spring Presets ───────────────────────────────── */
-const SPRING_UI = { type: 'spring' as const, stiffness: 300, damping: 30 };
+const SPRING = { type: 'spring' as const, stiffness: 300, damping: 30 };
 
-/* ── Animation Variants ──────────────────────────── */
 const cardVariants: Variants = {
-  hidden: { opacity: 0, y: 16, scale: 0.98 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: SPRING_UI },
+  hidden: { opacity: 0, y: 8 },
+  visible: { opacity: 1, y: 0, transition: SPRING },
 };
 
-/* ── Sub-components ──────────────────────────────── */
 function CardHeader({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return (
-    <div className={`pb-3 border-b border-glass-border ${className}`}>
-      {children}
-    </div>
-  );
+  return <div className={`pb-3 border-b border-base-border ${className}`}>{children}</div>;
 }
 
 function CardBody({ children, className = '' }: { children: ReactNode; className?: string }) {
@@ -33,17 +24,16 @@ function CardBody({ children, className = '' }: { children: ReactNode; className
 
 function CardFooter({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`pt-3 border-t border-glass-border flex items-center gap-3 ${className}`}>
+    <div className={`pt-3 border-t border-base-border flex items-center gap-3 ${className}`}>
       {children}
     </div>
   );
 }
 
-/* ── Main Card ───────────────────────────────────── */
 interface CardProps {
   children: ReactNode;
   className?: string;
-  glow?: 'cyan' | 'green' | 'red' | 'violet' | false;
+  highlight?: 'success' | 'warning' | 'error' | 'brand' | false;
   onClick?: () => void;
   animated?: boolean;
 }
@@ -51,15 +41,15 @@ interface CardProps {
 function CardRoot({
   children,
   className = '',
-  glow = false,
+  highlight = false,
   onClick,
   animated = true,
 }: CardProps) {
-  const glowClass = glow
-    ? glow === 'cyan'   ? 'shadow-glow-cyan animate-pulse-glow'
-    : glow === 'green'  ? 'shadow-glow-green animate-pulse-green'
-    : glow === 'red'    ? 'shadow-glow-red animate-pulse-red'
-    : glow === 'violet' ? 'shadow-glow-violet'
+  const highlightClass = highlight
+    ? highlight === 'success' ? 'border-status-success/30 bg-status-success-bg/30'
+    : highlight === 'warning' ? 'border-status-warning/30 bg-status-warning-bg/30'
+    : highlight === 'error'   ? 'border-status-error/30 bg-status-error-bg/30'
+    : highlight === 'brand'   ? 'border-brand/20 bg-brand-50/40'
     : ''
     : '';
 
@@ -69,17 +59,17 @@ function CardRoot({
         variants: cardVariants,
         initial: 'hidden' as const,
         animate: 'visible' as const,
-        whileHover: { y: -2, borderColor: 'rgba(255,255,255,0.18)', transition: SPRING_UI },
+        whileHover: { y: -1, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', transition: SPRING },
       }
     : {};
 
   return (
     <Component
       className={`
-        glass-surface rounded-card p-5
-        transition-shadow
-        ${glowClass}
-        ${onClick ? 'cursor-pointer' : ''}
+        surface-card p-5
+        transition-shadow duration-200
+        ${highlightClass}
+        ${onClick ? 'cursor-pointer active:scale-[0.99]' : ''}
         ${className}
       `}
       onClick={onClick}
@@ -92,7 +82,6 @@ function CardRoot({
   );
 }
 
-/* ── Compose & Export ────────────────────────────── */
 const Card = Object.assign(CardRoot, {
   Header: CardHeader,
   Body: CardBody,

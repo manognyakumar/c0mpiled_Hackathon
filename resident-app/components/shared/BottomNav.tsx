@@ -1,8 +1,5 @@
 /**
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * BottomNav — iOS-style with spring indicator.
- * Uses `inset-x` for RTL compat.
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * BottomNav — Clean bottom navigation with brand accent indicator.
  */
 'use client';
 
