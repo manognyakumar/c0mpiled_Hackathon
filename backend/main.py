@@ -39,16 +39,25 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Visitor Management System",
+    title=settings.project_name,
     description="Smart visitor approval system with voice input and calendar integration",
-    version="1.0.0",
-    lifespan=lifespan
+    version=settings.version,
+    lifespan=lifespan,
+    openapi_url=f"{settings.api_v1_str}/openapi.json" if settings.debug else None,
 )
 
-# CORS - Allow all for hackathon demo
+# ==================================================
+# Rate Limiting Setup
+# ==================================================
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# ==================================================
+# CORS Middleware
+# ==================================================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.get_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -84,9 +93,11 @@ def login(request: LoginRequest):
 @app.get("/")
 def read_root():
     """Health check and API info"""
+    logger.info("root_endpoint_called")
     return {
-        "message": "Visitor Management System API",
-        "version": "1.0.0",
+        "name": settings.project_name,
+        "version": settings.version,
+        "environment": settings.app_env.value,
         "status": "running",
         "docs": "/docs",
         "endpoints": {
@@ -102,8 +113,32 @@ def read_root():
 
 @app.get("/health")
 def health_check():
-    """Simple health check"""
-    return {"status": "healthy"}
+    """Production health check with database connectivity validation."""
+    from database import SessionLocal
+    db = SessionLocal()
+    try:
+        # Quick database query to verify connectivity
+        db.execute("SELECT 1")
+        db_healthy = True
+    except Exception as e:
+        logger.error("database_health_check_failed", error=str(e))
+        db_healthy = False
+    finally:
+        db.close()
+    
+    status_code = status.HTTP_200_OK if db_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
+    
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "status": "healthy" if db_healthy else "degraded",
+            "components": {
+                "api": "healthy",
+                "database": "healthy" if db_healthy else "unhealthy"
+            },
+            "version": settings.version,
+        }
+    )
 
 
 # ============== Demo/Test Endpoints ==============
