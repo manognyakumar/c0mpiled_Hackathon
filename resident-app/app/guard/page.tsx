@@ -12,6 +12,7 @@ import Button from '@/components/shared/Button';
 import Card from '@/components/shared/Card';
 import Avatar from '@/components/shared/Avatar';
 import Badge from '@/components/shared/Badge';
+import GuardRequestModal from '@/components/GuardRequestModal';
 import type { VisitorStatus as VisitorStatusType } from '@/lib/types';
 
 const SPRING = { type: 'spring' as const, stiffness: 300, damping: 30 };
@@ -58,6 +59,7 @@ export default function GuardStatusCheck() {
   const [result, setResult] = useState<SearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [arrivals, setArrivals] = useState<Array<{ name: string; apt: string; time: string }>>([]);
+  const [showRequestModal, setShowRequestModal] = useState(false);
 
   // Fetch expected arrivals on mount
   useEffect(() => {
@@ -231,6 +233,45 @@ export default function GuardStatusCheck() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Request Approval Button */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ ...SPRING, delay: 0.15 }}
+        className="mb-8"
+      >
+        <Card>
+          <div className="text-center py-2">
+            <p className="text-body text-ink-muted mb-3">
+              {t('Unscheduled visitor at the gate?', locale)}
+            </p>
+            <Button
+              variant="primary"
+              size="lg"
+              fullWidth
+              onClick={() => setShowRequestModal(true)}
+            >
+              🚪 {t('Request Approval from Resident', locale)}
+            </Button>
+          </div>
+        </Card>
+      </motion.div>
+
+      {/* Guard Request Modal */}
+      <GuardRequestModal
+        isOpen={showRequestModal}
+        onClose={() => setShowRequestModal(false)}
+        onSuccess={() => {
+          // Refresh expected arrivals
+          fetch('/api/guard/expected-today')
+            .then((r) => r.json())
+            .then((data) => {
+              if (data.arrivals?.length) setArrivals(data.arrivals);
+            })
+            .catch(console.error);
+        }}
+      />
 
       {/* Upcoming arrivals */}
       {!result && (

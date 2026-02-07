@@ -12,7 +12,7 @@ from slowapi.errors import RateLimitExceeded
 
 from core import settings, logger, limiter, bind_context, clear_context
 from database import init_db, seed_demo_data
-from api import visitors, residents, guards, voice, recurring, calendar
+from api import visitors, residents, guards, voice, recurring, calendar, face
 from auth import demo_login
 from schemas import LoginRequest, TokenResponse
 
@@ -70,6 +70,7 @@ app.include_router(guards.router)
 app.include_router(voice.router)
 app.include_router(recurring.router)
 app.include_router(calendar.router)
+app.include_router(face.router)
 
 
 # ============== Auth Endpoints ==============
