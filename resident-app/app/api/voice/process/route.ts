@@ -1,9 +1,10 @@
 /**
  * POST /api/voice/process
- * Processes audio input and returns transcript
+ * Processes audio input — proxied to FastAPI backend
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { BACKEND_URL, DEMO_RESIDENT_ID } from '@/lib/api';
 import type { VoiceProcessingResponse } from '@/lib/types';
 
 export async function POST(request: NextRequest) {
@@ -18,32 +19,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Mock voice processing
-    // In a real app, this would send audio to a speech-to-text service
-    const mockTranscripts = [
-      'Approve delivery for Ahmed at 10am',
-      'Accept the visitor Sarah Johnson',
-      'موافقة على الزائر أحمد',
-      'Deny the maintenance request'
-    ];
+    // Forward the form data to the backend
+    const backendForm = new FormData();
+    backendForm.append('audio', audioFile);
+    backendForm.append('resident_id', DEMO_RESIDENT_ID);
 
-    const randomTranscript = mockTranscripts[
-      Math.floor(Math.random() * mockTranscripts.length)
-    ];
+    const res = await fetch(`${BACKEND_URL}/api/voice/process`, {
+      method: 'POST',
+      body: backendForm,
+    });
 
-    const isArabic = randomTranscript.includes('موافقة') || randomTranscript.includes('أحمد');
+    if (!res.ok) {
+      const errText = await res.text().catch(() => 'Unknown error');
+      console.error('Voice backend error:', errText);
+      return NextResponse.json(
+        { ok: false, error: 'Backend processing failed', transcript: '' },
+        { status: 502 }
+      );
+    }
+
+    const data = await res.json();
 
     const response: VoiceProcessingResponse = {
-      ok: true,
-      transcript: randomTranscript,
-      locale_guess: isArabic ? 'ar' : 'en'
+      ok: data.success ?? true,
+      transcript: data.transcript ?? '',
+      locale_guess: data.language === 'ar' ? 'ar' : 'en',
     };
-
-    // Simulate processing delay
-    await new Promise(resolve => setTimeout(resolve, 500));
 
     return NextResponse.json(response);
   } catch (error) {
+    console.error('Voice process failed:', error);
     return NextResponse.json(
       { ok: false, error: 'Processing failed', transcript: '' },
       { status: 500 }

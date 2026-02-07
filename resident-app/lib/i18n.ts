@@ -100,6 +100,7 @@ const dict: Record<string, Record<Locale, string>> = {
   "Check Status":        { en: "Check Status",        ar: "التحقق من الحالة" },
   "Apartment":           { en: "Apartment",           ar: "الشقة" },
   "Entry Not Allowed":   { en: "Entry Not Allowed",   ar: "الدخول غير مسموح" },
+  "No visitors expected today": { en: "No visitors expected today", ar: "لا يوجد زوار متوقعون اليوم" },
 
   // ── New Visitor Form ───────────────────────────────
   "New Visitor":         { en: "New Visitor",         ar: "زائر جديد" },

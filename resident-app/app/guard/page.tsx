@@ -53,20 +53,62 @@ export default function GuardStatusCheck() {
   const [query, setQuery] = useState('');
   const [result, setResult] = useState<SearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [arrivals, setArrivals] = useState<Array<{ name: string; apt: string; time: string }>>([]);
+
+  // Fetch expected arrivals on mount
+  useState(() => {
+    fetch('/api/guard/expected-today')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.arrivals?.length) setArrivals(data.arrivals);
+      })
+      .catch(console.error);
+  });
 
   const handleSearch = async () => {
     if (!query.trim()) return;
     setIsSearching(true);
-    await new Promise(r => setTimeout(r, 800));
-    setResult({
-      name: query,
-      apartment: '301',
-      status: Math.random() > 0.5 ? 'APPROVED' : 'PENDING',
-      validUntil: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-      photo_url: 'https://i.pravatar.cc/150?img=25',
-      purpose: 'Delivery',
-    });
-    setIsSearching(false);
+    try {
+      const res = await fetch(`/api/guard/search?query=${encodeURIComponent(query.trim())}`);
+      const data = await res.json();
+
+      if (data.results && data.results.length > 0) {
+        const match = data.results[0];
+        const approval = match.latest_approval;
+        const statusMap: Record<string, string> = {
+          approved: 'APPROVED',
+          pending: 'PENDING',
+          denied: 'DENIED',
+          expired: 'EXPIRED',
+        };
+        setResult({
+          name: match.name,
+          apartment: approval?.apt_number ?? 'N/A',
+          status: (statusMap[approval?.status ?? ''] ?? 'PENDING') as VisitorStatusType,
+          validUntil: approval?.valid_until ?? undefined,
+          photo_url: match.photo_url ?? undefined,
+          purpose: 'Visit',
+        });
+      } else {
+        // No match found — show pending
+        setResult({
+          name: query,
+          apartment: 'N/A',
+          status: 'PENDING',
+          purpose: 'Not found in system',
+        });
+      }
+    } catch (err) {
+      console.error('Search failed:', err);
+      setResult({
+        name: query,
+        apartment: 'N/A',
+        status: 'PENDING',
+        purpose: 'Search error',
+      });
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   return (
@@ -160,11 +202,14 @@ export default function GuardStatusCheck() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
           <h3 className="text-title font-bold mb-4">{t('Upcoming Arrivals', locale)}</h3>
           <div className="flex flex-col gap-3">
-            {[
-              { name: 'Ahmed Hassan', apt: '204', time: '14:00' },
-              { name: 'Sarah Johnson', apt: '505', time: '15:30' },
-              { name: 'Mohammed Ali', apt: '102', time: '16:00' },
-            ].map((v, i) => (
+            {arrivals.length === 0 ? (
+              <Card>
+                <p className="text-body text-white/40 text-center py-6">
+                  {t('No visitors expected today', locale)}
+                </p>
+              </Card>
+            ) : (
+              arrivals.map((v, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, x: -20 }}
@@ -181,7 +226,8 @@ export default function GuardStatusCheck() {
                   </div>
                 </Card>
               </motion.div>
-            ))}
+              ))
+            )}
           </div>
         </motion.div>
       )}

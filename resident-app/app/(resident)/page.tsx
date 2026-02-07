@@ -85,7 +85,7 @@ export default function ResidentDashboard() {
         setIsLoading(true);
         const [sRes, vRes] = await Promise.all([
           fetch('/api/stats'),
-          fetch('/api/residents/123/schedule-today'),
+          fetch('/api/residents/1/schedule-today'),
         ]);
         const sData = await sRes.json();
         const vData = await vRes.json();
