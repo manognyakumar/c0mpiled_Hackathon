@@ -6,7 +6,7 @@
  */
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocale } from '@/components/LanguageToggle';
 import { t } from '@/lib/i18n';
@@ -56,14 +56,14 @@ export default function GuardStatusCheck() {
   const [arrivals, setArrivals] = useState<Array<{ name: string; apt: string; time: string }>>([]);
 
   // Fetch expected arrivals on mount
-  useState(() => {
+  useEffect(() => {
     fetch('/api/guard/expected-today')
       .then((r) => r.json())
       .then((data) => {
         if (data.arrivals?.length) setArrivals(data.arrivals);
       })
       .catch(console.error);
-  });
+  }, []);
 
   const handleSearch = async () => {
     if (!query.trim()) return;

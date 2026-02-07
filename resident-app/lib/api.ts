@@ -22,6 +22,7 @@ export async function backendFetch<T = unknown>(
 
   const res = await fetch(url, {
     ...options,
+    cache: 'no-store',
     headers: {
       'Content-Type': 'application/json',
       ...options?.headers,

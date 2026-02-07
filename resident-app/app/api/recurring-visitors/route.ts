@@ -7,6 +7,8 @@ import { NextResponse } from 'next/server';
 import { backendFetch, DEMO_RESIDENT_ID } from '@/lib/api';
 import type { RecurringVisitor } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
+
 interface BackendRecurring {
   id: number;
   name: string;

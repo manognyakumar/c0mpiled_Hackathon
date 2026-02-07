@@ -6,6 +6,8 @@
 import { NextResponse } from 'next/server';
 import { backendFetch, DEMO_RESIDENT_ID } from '@/lib/api';
 
+export const dynamic = 'force-dynamic';
+
 interface ScheduleResponse {
   total_count: number;
   pending_count: number;

@@ -6,6 +6,8 @@
 import { NextResponse } from 'next/server';
 import { backendFetch } from '@/lib/api';
 
+export const dynamic = 'force-dynamic';
+
 interface BackendExpectedResponse {
   date: string;
   total_expected: number;

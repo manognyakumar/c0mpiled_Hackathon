@@ -7,6 +7,8 @@ import { NextResponse } from 'next/server';
 import { backendFetch, DEMO_RESIDENT_ID } from '@/lib/api';
 import type { ApprovalRequest } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
+
 interface BackendApproval {
   approval_id: number;
   visitor_id: number;
