@@ -17,7 +17,9 @@ from schemas import (
     ApprovalRequestCreate, ApprovalAction, ApprovalDeny,
     ApprovalResponse, ApprovalStatusResponse, VisitorResponse
 )
-from config import DEFAULT_APPROVAL_DURATION
+from core import settings
+
+DEFAULT_APPROVAL_DURATION = settings.default_approval_duration
 from utils.audit_logger import log_action
 
 router = APIRouter(prefix="/api/visitors", tags=["visitors"])

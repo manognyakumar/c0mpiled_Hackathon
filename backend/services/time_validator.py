@@ -6,7 +6,9 @@ from typing import Optional, Tuple
 from sqlalchemy.orm import Session
 
 from models import Approval
-from config import DEFAULT_APPROVAL_DURATION
+from core import settings
+
+DEFAULT_APPROVAL_DURATION = settings.default_approval_duration
 
 
 def is_approval_valid(approval_id: int, db: Session) -> Tuple[bool, str]:

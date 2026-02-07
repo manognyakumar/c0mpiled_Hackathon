@@ -1,17 +1,20 @@
 """
 SQLite connection & session management
+Production-grade with proper connection pooling
 """
-import os
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, declarative_base
-from config import DATABASE_URL, DATA_DIR
+
+from core import settings, logger
 
 # Ensure data directory exists
-os.makedirs(DATA_DIR, exist_ok=True)
+settings.data_dir.mkdir(exist_ok=True)
 
+# Create engine with proper pooling settings
 engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False}
+    settings.db_url,
+    connect_args={"check_same_thread": False},  # SQLite specific
+    pool_pre_ping=True,  # Check connection health before using
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -33,7 +36,7 @@ def init_db():
     # Import models to register them
     import models
     Base.metadata.create_all(bind=engine)
-    print("✅ Database tables created!")
+    logger.info("database_tables_created")
 
 
 def seed_demo_data():
@@ -44,7 +47,7 @@ def seed_demo_data():
     try:
         # Check if data already exists
         if db.query(Resident).count() > 0:
-            print("📦 Demo data already exists, skipping...")
+            logger.info("demo_data_exists", message="Skipping seed")
             return
         
         # Create demo residents
@@ -60,12 +63,14 @@ def seed_demo_data():
         db.add(guard)
         
         db.commit()
-        print("✅ Demo data seeded!")
-        print("   Residents: 501 (Ahmed), 302 (Sarah), 103 (Mohammed)")
-        print("   Guard: Security Guard")
+        logger.info(
+            "demo_data_seeded",
+            residents=["501 (Ahmed)", "302 (Sarah)", "103 (Mohammed)"],
+            guard="Security Guard"
+        )
     except Exception as e:
         db.rollback()
-        print(f"❌ Error seeding data: {e}")
+        logger.error("demo_data_seed_failed", error=str(e))
     finally:
         db.close()
 

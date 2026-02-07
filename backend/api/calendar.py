@@ -12,7 +12,9 @@ from models import Visitor, Approval, Resident
 from schemas import CalendarEvent, CalendarSyncRequest, CalendarSyncResponse
 from services.time_validator import parse_time_string, calculate_time_window
 from utils.audit_logger import log_action
-from config import DEFAULT_APPROVAL_DURATION
+from core import settings
+
+DEFAULT_APPROVAL_DURATION = settings.default_approval_duration
 
 router = APIRouter(prefix="/api/calendar", tags=["calendar"])
 

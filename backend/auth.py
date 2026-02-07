@@ -1,12 +1,15 @@
 """
 Simple authentication for demo - Token-based
+Production-grade JWT handling with structured logging
 """
 from datetime import datetime, timedelta
 from typing import Optional
-from jose import JWTError, jwt
+
 from fastapi import Depends, HTTPException, status, Header
+from jose import JWTError, jwt
 from sqlalchemy.orm import Session
-from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+
+from core import settings, logger, bind_context
 from database import get_db
 from models import Resident, Guard
 
@@ -14,9 +17,11 @@ from models import Resident, Guard
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Create JWT access token"""
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = datetime.utcnow() + (
+        expires_delta or timedelta(minutes=settings.access_token_expire_minutes)
+    )
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, settings.secret_key, algorithm=settings.jwt_algorithm)
 
 
 def verify_token(authorization: Optional[str] = Header(None)) -> dict:
@@ -42,9 +47,13 @@ def verify_token(authorization: Optional[str] = Header(None)) -> dict:
         )
     
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.jwt_algorithm])
+        # Bind user context for logging
+        if payload.get("user_id"):
+            bind_context(user_id=payload["user_id"], user_type=payload.get("user_type"))
         return payload
-    except JWTError:
+    except JWTError as e:
+        logger.warning("invalid_token_attempt", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",

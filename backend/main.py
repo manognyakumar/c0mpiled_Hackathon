@@ -115,10 +115,11 @@ def read_root():
 def health_check():
     """Production health check with database connectivity validation."""
     from database import SessionLocal
+    from sqlalchemy import text
     db = SessionLocal()
     try:
         # Quick database query to verify connectivity
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         db_healthy = True
     except Exception as e:
         logger.error("database_health_check_failed", error=str(e))

@@ -1,12 +1,12 @@
 """
 Voice Processing Service - Whisper transcription + NER
+Production-grade with proper error handling and logging
 """
-import os
 import tempfile
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Tuple
 
-from config import WHISPER_MODEL, AUDIO_DIR
+from core import settings, logger
 
 # Whisper will be loaded lazily
 _whisper_model = None
@@ -15,17 +15,21 @@ _whisper_model = None
 def get_whisper_model():
     """Lazy load Whisper model"""
     global _whisper_model
+    if settings.use_mock_whisper:
+        logger.info("whisper_mock_mode", message="Using mock transcription")
+        return None
+        
     if _whisper_model is None:
         try:
             import whisper
-            print(f"🎤 Loading Whisper model: {WHISPER_MODEL}")
-            _whisper_model = whisper.load_model(WHISPER_MODEL)
-            print("✅ Whisper model loaded!")
+            logger.info("whisper_loading", model=settings.whisper_model)
+            _whisper_model = whisper.load_model(settings.whisper_model)
+            logger.info("whisper_loaded")
         except ImportError:
-            print("⚠️ Whisper not installed. Voice features will use mock mode.")
+            logger.warning("whisper_not_installed", message="Using mock mode")
             return None
         except Exception as e:
-            print(f"⚠️ Failed to load Whisper: {e}. Using mock mode.")
+            logger.error("whisper_load_failed", error=str(e))
             return None
     return _whisper_model
 
