@@ -4,7 +4,7 @@ Production-grade setup with structured logging and rate limiting
 """
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, status, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
@@ -13,7 +13,7 @@ from slowapi.errors import RateLimitExceeded
 from core import settings, logger, limiter, bind_context, clear_context
 from database import init_db, seed_demo_data
 from api import visitors, residents, guards, voice, recurring, calendar, face
-from auth import demo_login
+from auth import demo_login, verify_token
 from schemas import LoginRequest, TokenResponse
 
 
@@ -75,18 +75,144 @@ app.include_router(face.router)
 
 # ============== Auth Endpoints ==============
 
-@app.post("/api/auth/login", response_model=TokenResponse)
+@app.post("/api/auth/login")
 def login(request: LoginRequest):
     """
-    Demo login - just provide phone number and user type.
-    No password required for hackathon demo.
+    Login — provide phone, user_type, and optionally password.
     """
     from database import SessionLocal
     db = SessionLocal()
     try:
-        return demo_login(request.phone, request.user_type, db)
+        return demo_login(request.phone, request.user_type, db, request.password)
     finally:
         db.close()
+
+
+@app.get("/api/auth/me")
+def get_me(token_data: dict = Depends(verify_token)):
+    """Get current user profile from token"""
+    from database import SessionLocal
+    from models import Resident, Guard
+    db = SessionLocal()
+    try:
+        user_type = token_data.get("user_type")
+        user_id = token_data.get("user_id")
+        if user_type == "resident":
+            user = db.query(Resident).filter(Resident.id == user_id).first()
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+            return {
+                "user_id": user.id,
+                "user_type": "resident",
+                "name": user.name,
+                "phone": user.phone,
+                "apt_number": user.apt_number,
+                "photo_url": user.photo_url,
+                "preferred_language": user.preferred_language,
+            }
+        else:
+            user = db.query(Guard).filter(Guard.id == user_id).first()
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+            return {
+                "user_id": user.id,
+                "user_type": "guard",
+                "name": user.name,
+                "phone": user.phone,
+            }
+    finally:
+        db.close()
+
+
+@app.put("/api/auth/change-password")
+def change_password(
+    payload: dict,
+    token_data: dict = Depends(verify_token),
+):
+    """Change current user's password"""
+    from database import SessionLocal
+    from models import Resident, Guard
+    from auth import pwd_context
+    
+    old_password = payload.get("old_password", "")
+    new_password = payload.get("new_password", "")
+    if not new_password or len(new_password) < 4:
+        raise HTTPException(status_code=400, detail="Password must be at least 4 characters")
+    
+    db = SessionLocal()
+    try:
+        user_type = token_data.get("user_type")
+        user_id = token_data.get("user_id")
+        Model = Resident if user_type == "resident" else Guard
+        user = db.query(Model).filter(Model.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Verify old password if one exists
+        if user.password_hash and old_password:
+            if not pwd_context.verify(old_password, user.password_hash):
+                raise HTTPException(status_code=401, detail="Current password is incorrect")
+        
+        user.password_hash = pwd_context.hash(new_password)
+        db.commit()
+        return {"ok": True, "message": "Password updated"}
+    finally:
+        db.close()
+
+
+@app.post("/api/auth/upload-photo")
+async def upload_profile_photo(
+    request: Request,
+    token_data: dict = Depends(verify_token),
+):
+    """Upload profile photo for current resident"""
+    from database import SessionLocal
+    from models import Resident
+    import base64, uuid
+    from pathlib import Path
+    
+    if token_data.get("user_type") != "resident":
+        raise HTTPException(status_code=403, detail="Only residents can upload photos")
+    
+    db = SessionLocal()
+    try:
+        form = await request.form()
+        photo = form.get("photo")
+        if not photo:
+            raise HTTPException(status_code=400, detail="No photo provided")
+        
+        # Save file
+        contents = await photo.read()
+        filename = f"resident_{token_data['user_id']}_{uuid.uuid4().hex[:8]}.jpg"
+        photos_dir = Path(__file__).parent / "data" / "photos"
+        photos_dir.mkdir(parents=True, exist_ok=True)
+        filepath = photos_dir / filename
+        filepath.write_bytes(contents)
+        
+        photo_url = f"/api/photos/{filename}"
+        
+        resident = db.query(Resident).filter(Resident.id == token_data["user_id"]).first()
+        if not resident:
+            raise HTTPException(status_code=404, detail="Resident not found")
+        
+        resident.photo_url = photo_url
+        db.commit()
+        
+        return {"ok": True, "photo_url": photo_url}
+    finally:
+        db.close()
+
+
+@app.get("/api/photos/{filename}")
+async def serve_photo(filename: str):
+    """Serve uploaded photos"""
+    from fastapi.responses import FileResponse
+    from pathlib import Path
+    
+    filepath = Path(__file__).parent / "data" / "photos" / filename
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Photo not found")
+    return FileResponse(filepath)
 
 
 # ============== Health & Info Endpoints ==============

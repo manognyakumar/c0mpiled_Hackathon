@@ -17,6 +17,7 @@ class Resident(Base):
     phone = Column(String(20), nullable=False)
     preferred_language = Column(String(10), default="en")  # 'en' or 'ar'
     password_hash = Column(String(255), nullable=True)
+    photo_url = Column(String(500), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     approvals = relationship("Approval", back_populates="resident")

@@ -3,6 +3,7 @@
  */
 import type { Metadata } from 'next';
 import { LocaleProvider } from '@/components/LanguageToggle';
+import { AuthProvider } from '@/lib/auth';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -19,7 +20,9 @@ export default function RootLayout({
     <html lang="en" dir="ltr" suppressHydrationWarning>
       <body className="bg-base text-ink antialiased">
         <LocaleProvider>
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </LocaleProvider>
       </body>
     </html>

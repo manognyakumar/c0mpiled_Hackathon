@@ -17,6 +17,7 @@ import FAB from '@/components/shared/FAB';
 import StatCard from '@/components/shared/StatCard';
 import AddVisitorModal from '@/components/AddVisitorModal';
 import VoiceCommandModal from '@/components/VoiceCommandModal';
+import { useAuth } from '@/lib/auth';
 import type { Visitor, DashboardStats, VisitorStatus } from '@/lib/types';
 
 const SPRING = { type: 'spring' as const, stiffness: 300, damping: 30 };
@@ -62,6 +63,7 @@ export default function ResidentDashboard() {
   const { locale } = useLocale();
   const rtl = isRTL(locale);
   const router = useRouter();
+  const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -114,7 +116,7 @@ export default function ResidentDashboard() {
         className="px-5 pt-8 pb-2"
       >
         <h1 className="text-display text-ink">
-          {getGreeting()}, Mohammed
+          {getGreeting()}, {user?.name?.split(' ')[0] || 'Resident'}
         </h1>
         <div className="flex items-center gap-2 mt-1">
           <span className="w-2 h-2 rounded-full bg-status-success animate-pulse-soft" />

@@ -1,0 +1,34 @@
+/**
+ * POST /api/auth/login — Proxy to FastAPI login endpoint.
+ */
+import { NextRequest, NextResponse } from 'next/server';
+import { BACKEND_URL } from '@/lib/api';
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+
+    const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      cache: 'no-store',
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      return NextResponse.json(
+        { error: data.detail || 'Login failed' },
+        { status: res.status }
+      );
+    }
+
+    return NextResponse.json(data);
+  } catch (err) {
+    return NextResponse.json(
+      { error: 'Server error' },
+      { status: 500 }
+    );
+  }
+}

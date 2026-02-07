@@ -104,9 +104,13 @@ def get_optional_auth(authorization: Optional[str] = Header(None)) -> Optional[d
         return None
 
 
-# Simple demo login (no password check for hackathon)
-def demo_login(phone: str, user_type: str, db: Session) -> dict:
-    """Demo login - just look up by phone, no password required"""
+# Password hashing context
+from passlib.context import CryptContext
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def demo_login(phone: str, user_type: str, db: Session, password: str = None) -> dict:
+    """Login — verifies password if provided, otherwise demo mode"""
     if user_type == "resident":
         user = db.query(Resident).filter(Resident.phone == phone).first()
         if not user:
@@ -116,15 +120,31 @@ def demo_login(phone: str, user_type: str, db: Session) -> dict:
         if not user:
             raise HTTPException(status_code=404, detail="Guard not found")
     
-    token = create_access_token({
+    # Verify password if hash exists
+    if password and user.password_hash:
+        if not pwd_context.verify(password, user.password_hash):
+            raise HTTPException(status_code=401, detail="Invalid password")
+    
+    extra_data = {
         "user_id": user.id,
         "user_type": user_type,
-        "phone": phone
-    })
+        "phone": phone,
+    }
+    if user_type == "resident":
+        extra_data["name"] = user.name
+        extra_data["apt_number"] = user.apt_number
+        extra_data["photo_url"] = user.photo_url
+    else:
+        extra_data["name"] = user.name
+
+    token = create_access_token(extra_data)
     
     return {
         "access_token": token,
         "token_type": "bearer",
         "user_type": user_type,
-        "user_id": user.id
+        "user_id": user.id,
+        "name": user.name,
+        "apt_number": getattr(user, 'apt_number', None),
+        "photo_url": getattr(user, 'photo_url', None),
     }
