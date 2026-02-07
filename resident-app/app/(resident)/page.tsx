@@ -4,9 +4,10 @@
  */
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, type Variants } from 'framer-motion';
 import { format } from 'date-fns';
+import { useRouter } from 'next/navigation';
 import { useLocale } from '@/components/LanguageToggle';
 import { t, isRTL } from '@/lib/i18n';
 import Card from '@/components/shared/Card';
@@ -14,6 +15,8 @@ import Badge from '@/components/shared/Badge';
 import Avatar from '@/components/shared/Avatar';
 import FAB from '@/components/shared/FAB';
 import StatCard from '@/components/shared/StatCard';
+import AddVisitorModal from '@/components/AddVisitorModal';
+import VoiceCommandModal from '@/components/VoiceCommandModal';
 import type { Visitor, DashboardStats, VisitorStatus } from '@/lib/types';
 
 const SPRING = { type: 'spring' as const, stiffness: 300, damping: 30 };
@@ -58,29 +61,34 @@ function getGreeting(): string {
 export default function ResidentDashboard() {
   const { locale } = useLocale();
   const rtl = isRTL(locale);
+  const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showAddVisitor, setShowAddVisitor] = useState(false);
+  const [showVoiceCommand, setShowVoiceCommand] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const [sRes, vRes] = await Promise.all([
+        fetch('/api/stats'),
+        fetch('/api/residents/1/schedule-today'),
+      ]);
+      const sData = await sRes.json();
+      const vData = await vRes.json();
+      setStats(sData);
+      setVisitors(vData.visitors);
+    } catch (err) {
+      console.error('Fetch failed:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    (async () => {
-      try {
-        setIsLoading(true);
-        const [sRes, vRes] = await Promise.all([
-          fetch('/api/stats'),
-          fetch('/api/residents/1/schedule-today'),
-        ]);
-        const sData = await sRes.json();
-        const vData = await vRes.json();
-        setStats(sData);
-        setVisitors(vData.visitors);
-      } catch (err) {
-        console.error('Fetch failed:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    })();
-  }, []);
+    fetchData();
+  }, [fetchData]);
 
   if (isLoading) {
     return (
@@ -134,13 +142,22 @@ export default function ResidentDashboard() {
           transition={{ ...SPRING, delay: 0.25 }}
           className="flex gap-3"
         >
-          <button className="flex-1 surface-card p-3 text-center hover:shadow-card-hover transition-shadow duration-200 text-caption text-ink-secondary">
+          <button
+            onClick={() => setShowAddVisitor(true)}
+            className="flex-1 surface-card p-3 text-center hover:shadow-card-hover transition-shadow duration-200 text-caption text-ink-secondary"
+          >
             ➕ {t('Add', locale)} {t('visitors', locale)}
           </button>
-          <button className="flex-1 surface-card p-3 text-center hover:shadow-card-hover transition-shadow duration-200 text-caption text-ink-secondary">
+          <button
+            onClick={() => setShowVoiceCommand(true)}
+            className="flex-1 surface-card p-3 text-center hover:shadow-card-hover transition-shadow duration-200 text-caption text-ink-secondary"
+          >
             🎤 {t('Voice Command', locale)}
           </button>
-          <button className="flex-1 surface-card p-3 text-center hover:shadow-card-hover transition-shadow duration-200 text-caption text-ink-secondary">
+          <button
+            onClick={() => router.push('/approvals')}
+            className="flex-1 surface-card p-3 text-center hover:shadow-card-hover transition-shadow duration-200 text-caption text-ink-secondary"
+          >
             ✅ {t('Approvals', locale)}
           </button>
         </motion.div>
@@ -232,8 +249,20 @@ export default function ResidentDashboard() {
       {/* FAB */}
       <FAB
         icon="🎤"
-        onClick={() => console.log('Voice input')}
+        onClick={() => setShowVoiceCommand(true)}
         ariaLabel="Voice command"
+      />
+
+      {/* Modals */}
+      <AddVisitorModal
+        isOpen={showAddVisitor}
+        onClose={() => setShowAddVisitor(false)}
+        onSuccess={fetchData}
+      />
+      <VoiceCommandModal
+        isOpen={showVoiceCommand}
+        onClose={() => setShowVoiceCommand(false)}
+        onSuccess={fetchData}
       />
     </div>
   );

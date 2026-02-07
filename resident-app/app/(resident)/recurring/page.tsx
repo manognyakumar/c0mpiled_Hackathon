@@ -3,12 +3,13 @@
  */
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, type Variants } from 'framer-motion';
 import { useLocale } from '@/components/LanguageToggle';
 import { t } from '@/lib/i18n';
 import Card from '@/components/shared/Card';
 import Button from '@/components/shared/Button';
+import AddRecurringModal from '@/components/AddRecurringModal';
 import type { RecurringVisitor } from '@/lib/types';
 
 const SPRING = { type: 'spring' as const, stiffness: 300, damping: 30 };
@@ -26,10 +27,9 @@ export default function RecurringPage() {
   const { locale } = useLocale();
   const [recurring, setRecurring] = useState<RecurringVisitor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
 
-  useEffect(() => { fetchRecurring(); }, []);
-
-  const fetchRecurring = async () => {
+  const fetchRecurring = useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await fetch('/api/recurring-visitors');
@@ -37,12 +37,38 @@ export default function RecurringPage() {
       setRecurring(data.recurring);
     } catch (err) { console.error(err); }
     finally { setIsLoading(false); }
-  };
+  }, []);
 
-  const toggleActive = (id: string) => {
+  useEffect(() => { fetchRecurring(); }, [fetchRecurring]);
+
+  const toggleActive = async (id: string) => {
+    const visitor = recurring.find(v => v.id === id);
+    if (!visitor) return;
+    const newActive = !visitor.active;
+
+    // Optimistic update
     setRecurring(prev =>
-      prev.map(v => (v.id === id ? { ...v, active: !v.active } : v)),
+      prev.map(v => (v.id === id ? { ...v, active: newActive } : v)),
     );
+
+    try {
+      const res = await fetch('/api/recurring-visitors/toggle', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: Number(id), is_active: newActive }),
+      });
+      if (!res.ok) {
+        // Revert on failure
+        setRecurring(prev =>
+          prev.map(v => (v.id === id ? { ...v, active: !newActive } : v)),
+        );
+      }
+    } catch {
+      // Revert on error
+      setRecurring(prev =>
+        prev.map(v => (v.id === id ? { ...v, active: !newActive } : v)),
+      );
+    }
   };
 
   if (isLoading) {
@@ -70,7 +96,7 @@ export default function RecurringPage() {
             {recurring.filter(v => v.active).length} {t('Active', locale).toLowerCase()}
           </p>
         </div>
-        <Button variant="primary" onClick={() => {}}>
+        <Button variant="primary" onClick={() => setShowAddModal(true)}>
           + {t('Add', locale)}
         </Button>
       </motion.div>
@@ -115,6 +141,13 @@ export default function RecurringPage() {
           ))}
         </motion.div>
       )}
+
+      {/* Add Recurring Visitor Modal */}
+      <AddRecurringModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSuccess={fetchRecurring}
+      />
     </div>
   );
 }
