@@ -1,7 +1,5 @@
 /**
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * StatCard — Dashboard stat with animated count, neon accent.
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * StatCard — Dashboard stat with clean accent stripe.
  */
 'use client';
 
@@ -9,7 +7,7 @@ import { motion } from 'framer-motion';
 
 const SPRING = { type: 'spring' as const, stiffness: 300, damping: 30 };
 
-type Accent = 'cyan' | 'green' | 'violet' | 'yellow' | 'red';
+type Accent = 'blue' | 'green' | 'amber' | 'teal' | 'red';
 
 interface StatCardProps {
   value: number;
@@ -18,40 +16,39 @@ interface StatCardProps {
   delay?: number;
 }
 
-const accentColor: Record<Accent, string> = {
-  cyan:   'text-neon-cyan',
-  green:  'text-neon-green',
-  violet: 'text-neon-violet',
-  yellow: 'text-status-pending',
-  red:    'text-status-denied',
+const accentBorder: Record<Accent, string> = {
+  blue:  'border-s-brand',
+  green: 'border-s-accent-green',
+  amber: 'border-s-status-warning',
+  teal:  'border-s-accent-teal',
+  red:   'border-s-status-error',
 };
 
-const accentGlow: Record<Accent, string> = {
-  cyan:   'shadow-glow-cyan',
-  green:  'shadow-glow-green',
-  violet: 'shadow-glow-violet',
-  yellow: '',
-  red:    'shadow-glow-red',
+const accentText: Record<Accent, string> = {
+  blue:  'text-brand',
+  green: 'text-accent-green',
+  amber: 'text-status-warning',
+  teal:  'text-accent-teal',
+  red:   'text-status-error',
 };
 
-export default function StatCard({ value, label, accent = 'cyan', delay = 0 }: StatCardProps) {
+export default function StatCard({ value, label, accent = 'blue', delay = 0 }: StatCardProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      whileHover={{ y: -2, borderColor: 'rgba(255,255,255,0.18)' }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -1, boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
       transition={{ ...SPRING, delay }}
       className={`
-        glass-surface rounded-card p-5
-        text-center cursor-default
-        hover:${accentGlow[accent]}
-        transition-shadow
+        surface-card p-4 border-s-4
+        ${accentBorder[accent]}
+        transition-shadow duration-200
       `}
     >
-      <div className={`text-display ${accentColor[accent]}`}>
+      <div className={`text-display ${accentText[accent]}`}>
         {value}
       </div>
-      <div className="text-caption text-white/50 mt-1">
+      <div className="text-caption text-ink-muted mt-0.5">
         {label}
       </div>
     </motion.div>

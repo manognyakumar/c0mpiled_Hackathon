@@ -1,8 +1,5 @@
 /**
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * Recurring Visitors — Obsidian Neon
- * Toggle switch, staggered list, glass surface.
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * Recurring Visitors — Clean list with toggle switches.
  */
 'use client';
 
@@ -18,10 +15,10 @@ const SPRING = { type: 'spring' as const, stiffness: 300, damping: 30 };
 
 const listVariants: Variants = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.07 } },
+  visible: { transition: { staggerChildren: 0.06 } },
 };
 const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 16 },
+  hidden: { opacity: 0, y: 10 },
   visible: { opacity: 1, y: 0, transition: SPRING },
 };
 
@@ -50,8 +47,8 @@ export default function RecurringPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pb-24 px-5 pt-8">
-        <div className="skeleton h-10 w-52 mb-2" />
+      <div className="min-h-screen pb-24 px-5 pt-8 bg-base">
+        <div className="skeleton h-8 w-52 mb-1" />
         <div className="skeleton h-5 w-24 mb-8" />
         {[0, 1, 2].map(i => <div key={i} className="skeleton h-24 rounded-card mb-3" />)}
       </div>
@@ -59,17 +56,17 @@ export default function RecurringPage() {
   }
 
   return (
-    <div className="min-h-screen pb-24 px-5 pt-8">
+    <div className="min-h-screen pb-24 px-5 pt-8 bg-base">
       {/* Header */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={SPRING}
-        className="flex items-end justify-between mb-8"
+        className="flex items-end justify-between mb-6"
       >
         <div>
-          <h1 className="text-display text-gradient-cyan">{t('Recurring Visitors', locale)}</h1>
-          <p className="text-caption text-white/40 mt-1">
+          <h1 className="text-display text-ink">{t('Recurring Visitors', locale)}</h1>
+          <p className="text-caption text-ink-muted mt-1">
             {recurring.filter(v => v.active).length} {t('Active', locale).toLowerCase()}
           </p>
         </div>
@@ -81,13 +78,14 @@ export default function RecurringPage() {
       {/* List */}
       {recurring.length === 0 ? (
         <Card>
-          <p className="text-body text-white/40 text-center py-10">
-            🔄 {t('No recurring visitors', locale)}
-          </p>
+          <div className="text-center py-12">
+            <p className="text-4xl mb-3">🔁</p>
+            <p className="text-body text-ink-muted">{t('No recurring visitors', locale)}</p>
+          </div>
         </Card>
       ) : (
         <motion.div
-          className="flex flex-col gap-4"
+          className="flex flex-col gap-3"
           variants={listVariants}
           initial="hidden"
           animate="visible"
@@ -97,12 +95,11 @@ export default function RecurringPage() {
               <Card>
                 <div className="flex items-center justify-between gap-4">
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-title text-white/90 truncate">{visitor.name}</h3>
-                    <p className="text-caption text-neon-cyan mt-0.5">{visitor.role}</p>
-                    <p className="text-micro text-white/30 mt-1">{visitor.recurrence_rule}</p>
+                    <h3 className="text-title text-ink truncate">{visitor.name}</h3>
+                    <p className="text-caption text-brand mt-0.5">{visitor.role}</p>
+                    <p className="text-micro text-ink-faint mt-1">{visitor.recurrence_rule}</p>
                   </div>
 
-                  {/* Toggle switch */}
                   <motion.button
                     onClick={() => toggleActive(visitor.id)}
                     className="toggle-track"

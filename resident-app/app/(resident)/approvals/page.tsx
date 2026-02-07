@@ -1,8 +1,5 @@
 /**
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * Approvals Page — Obsidian Neon
- * staggerChildren list, spring exit, RTL-aware slide.
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * Approvals Page — Calm approval/deny flow.
  */
 'use client';
 
@@ -21,11 +18,11 @@ const SPRING = { type: 'spring' as const, stiffness: 300, damping: 30 };
 
 const listVariants: Variants = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.08 } },
+  visible: { transition: { staggerChildren: 0.07 } },
 };
 
 const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 10 },
   visible: { opacity: 1, y: 0, transition: SPRING },
 };
 
@@ -58,7 +55,7 @@ export default function ApprovalsPage() {
         body: JSON.stringify({ visitor_id: id, valid_until: validUntil }),
       });
       if (res.ok) {
-        await new Promise(r => setTimeout(r, 400));
+        await new Promise(r => setTimeout(r, 300));
         setRequests(prev => prev.filter(req => req.id !== id));
       }
     } catch (err) { console.error(err); }
@@ -74,7 +71,7 @@ export default function ApprovalsPage() {
         body: JSON.stringify({ visitor_id: id }),
       });
       if (res.ok) {
-        await new Promise(r => setTimeout(r, 400));
+        await new Promise(r => setTimeout(r, 300));
         setRequests(prev => prev.filter(req => req.id !== id));
       }
     } catch (err) { console.error(err); }
@@ -83,8 +80,8 @@ export default function ApprovalsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pb-24 px-5 pt-8">
-        <div className="skeleton h-10 w-52 mb-2" />
+      <div className="min-h-screen pb-24 px-5 pt-8 bg-base">
+        <div className="skeleton h-8 w-52 mb-1" />
         <div className="skeleton h-5 w-32 mb-8" />
         {[0, 1].map(i => <div key={i} className="skeleton h-36 rounded-card mb-4" />)}
       </div>
@@ -92,22 +89,24 @@ export default function ApprovalsPage() {
   }
 
   return (
-    <div className="min-h-screen pb-24 px-5 pt-8">
+    <div className="min-h-screen pb-24 px-5 pt-8 bg-base">
       {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={SPRING}>
-        <h1 className="text-display text-gradient-cyan">{t('Approval Requests', locale)}</h1>
-        <p className="text-caption text-white/40 mt-1">
+      <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={SPRING}>
+        <h1 className="text-display text-ink">{t('Approval Requests', locale)}</h1>
+        <p className="text-caption text-ink-muted mt-1">
           {requests.length} {t('requests', locale)}
         </p>
       </motion.div>
 
       {/* List */}
-      <div className="mt-8">
+      <div className="mt-6">
         {requests.length === 0 ? (
           <Card>
-            <p className="text-body text-white/40 text-center py-10">
-              ✨ {t('No approval requests', locale)}
-            </p>
+            <div className="text-center py-12">
+              <p className="text-4xl mb-3">✅</p>
+              <p className="text-body text-ink-muted">{t('No approval requests', locale)}</p>
+              <p className="text-caption text-ink-faint mt-1">You're all caught up!</p>
+            </div>
           </Card>
         ) : (
           <motion.div
@@ -122,23 +121,21 @@ export default function ApprovalsPage() {
                   key={req.id}
                   layout
                   variants={itemVariants}
-                  exit={{ opacity: 0, scale: 0.92, x: rtl ? 100 : -100, transition: SPRING }}
+                  exit={{ opacity: 0, scale: 0.95, x: rtl ? 60 : -60, transition: SPRING }}
                 >
-                  <Card glow="cyan">
-                    {/* Top row */}
-                    <div className="flex items-start gap-4 mb-5">
-                      <Avatar src={req.photo_url} alt={req.name} size="lg" ring />
+                  <Card highlight="brand">
+                    <div className="flex items-start gap-4 mb-4">
+                      <Avatar src={req.photo_url} alt={req.name} size="lg" />
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-title text-white/90 truncate">{req.name}</h3>
-                        <p className="text-body text-white/50">{req.purpose}</p>
-                        <p className="text-micro text-white/30 mt-1">
+                        <h3 className="text-title text-ink truncate">{req.name}</h3>
+                        <p className="text-body text-ink-secondary">{req.purpose}</p>
+                        <p className="text-micro text-ink-faint mt-1">
                           {t('Requested', locale)} {format(new Date(req.requested_at), 'h:mm a')}
                         </p>
                       </div>
-                      <Badge variant="pending" pulse>{t('PENDING', locale)}</Badge>
+                      <Badge variant="pending" pulse>{t('Pending', locale)}</Badge>
                     </div>
 
-                    {/* Action row */}
                     <div className="grid grid-cols-2 gap-3">
                       <Button
                         variant="success"

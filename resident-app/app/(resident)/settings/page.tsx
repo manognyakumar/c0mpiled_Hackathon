@@ -1,8 +1,5 @@
 /**
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * Settings Page — Obsidian Neon
- * Profile card, language toggle, notification switches.
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * Settings Page — Profile, language, notifications.
  */
 'use client';
 
@@ -17,10 +14,10 @@ const SPRING = { type: 'spring' as const, stiffness: 300, damping: 30 };
 
 const stagger: Variants = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.06, delayChildren: 0.1 } },
+  visible: { transition: { staggerChildren: 0.06, delayChildren: 0.08 } },
 };
 const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 16 },
+  hidden: { opacity: 0, y: 10 },
   visible: { opacity: 1, y: 0, transition: SPRING },
 };
 
@@ -33,11 +30,11 @@ export default function SettingsPage() {
   const toggleLang = () => setLocale(locale === 'en' ? 'ar' : 'en');
 
   return (
-    <div className="min-h-screen pb-24 px-5 pt-8">
+    <div className="min-h-screen pb-24 px-5 pt-8 bg-base">
       {/* Header */}
       <motion.h1
-        className="text-display text-white/90 mb-8"
-        initial={{ opacity: 0, y: -20 }}
+        className="text-display text-ink mb-6"
+        initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={SPRING}
       >
@@ -45,35 +42,35 @@ export default function SettingsPage() {
       </motion.h1>
 
       <motion.div variants={stagger} initial="hidden" animate="visible" className="flex flex-col gap-5">
-        {/* ── Profile Card ────────────────────────── */}
+        {/* Profile Card */}
         <motion.div variants={fadeUp}>
           <Card>
             <div className="flex items-center gap-4">
               <Avatar src="https://i.pravatar.cc/150?img=10" alt="User" size="xl" ring />
               <div>
-                <h2 className="text-heading text-white/90">John Smith</h2>
-                <p className="text-caption text-white/40">Apartment 304</p>
+                <h2 className="text-heading text-ink">Mohammed</h2>
+                <p className="text-caption text-ink-muted">Apartment 304</p>
               </div>
             </div>
           </Card>
         </motion.div>
 
-        {/* ── Language ────────────────────────────── */}
+        {/* Language */}
         <motion.div variants={fadeUp}>
-          <h3 className="text-caption text-white/40 uppercase tracking-wider mb-3">
+          <h3 className="text-caption text-ink-muted uppercase tracking-wider mb-3">
             {t('Language', locale)}
           </h3>
           <Card onClick={toggleLang}>
             <div className="flex items-center justify-between">
-              <span className="text-body">{locale === 'en' ? 'English' : 'العربية'}</span>
+              <span className="text-body text-ink">{locale === 'en' ? 'English' : 'العربية'}</span>
               <span className="text-xl">{locale === 'en' ? '🇬🇧' : '🇸🇦'}</span>
             </div>
           </Card>
         </motion.div>
 
-        {/* ── Notifications ──────────────────────── */}
+        {/* Notifications */}
         <motion.div variants={fadeUp}>
-          <h3 className="text-caption text-white/40 uppercase tracking-wider mb-3">
+          <h3 className="text-caption text-ink-muted uppercase tracking-wider mb-3">
             {t('Notifications', locale)}
           </h3>
           <div className="flex flex-col gap-3">
@@ -94,12 +91,18 @@ export default function SettingsPage() {
             />
           </div>
         </motion.div>
+
+        {/* Logout */}
+        <motion.div variants={fadeUp}>
+          <button className="w-full text-center text-body text-status-error py-3 hover:bg-status-error-bg rounded-button transition-colors">
+            Log out
+          </button>
+        </motion.div>
       </motion.div>
     </div>
   );
 }
 
-/* ── Toggle Row Component ──────────────────────────── */
 function ToggleRow({
   label,
   checked,
@@ -112,7 +115,7 @@ function ToggleRow({
   return (
     <Card animated={false}>
       <div className="flex items-center justify-between">
-        <span className="text-body text-white/70">{label}</span>
+        <span className="text-body text-ink-secondary">{label}</span>
         <motion.button
           onClick={onToggle}
           className="toggle-track"

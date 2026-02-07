@@ -1,8 +1,5 @@
 /**
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * Badge — Status indicator with pulse glow
- * Uses discriminated VisitorStatus color mapping.
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * Badge — Status indicator with calm, clear colors.
  */
 'use client';
 
@@ -21,12 +18,12 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  approved: 'bg-neon-green/15 text-neon-green border-neon-green/30',
-  pending:  'bg-status-pending/15 text-status-pending border-status-pending/30',
-  denied:   'bg-status-denied/15 text-status-denied border-status-denied/30',
-  expired:  'bg-status-expired/15 text-status-expired border-status-expired/30',
-  info:     'bg-neon-cyan/15 text-neon-cyan border-neon-cyan/30',
-  muted:    'bg-white/5 text-white/50 border-white/10',
+  approved: 'bg-status-success-bg text-status-success',
+  pending:  'bg-status-warning-bg text-amber-700',
+  denied:   'bg-status-error-bg text-status-error',
+  expired:  'bg-base-muted text-ink-muted',
+  info:     'bg-status-info-bg text-brand',
+  muted:    'bg-base-muted text-ink-faint',
 };
 
 export default function Badge({
@@ -37,16 +34,15 @@ export default function Badge({
 }: BadgeProps) {
   return (
     <motion.span
-      initial={{ scale: 0.85, opacity: 0 }}
+      initial={{ scale: 0.9, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={SPRING}
       className={`
         inline-flex items-center gap-1.5
         px-2.5 py-1 rounded-badge
-        text-micro font-semibold uppercase tracking-wider
-        border
+        text-micro font-semibold
         ${variantStyles[variant]}
-        ${pulse ? 'animate-pulse-glow' : ''}
+        ${pulse ? 'animate-pulse-soft' : ''}
       `}
     >
       {icon && <span>{icon}</span>}
